@@ -1,0 +1,48 @@
+<?php
+
+/*
+|--------------------------------------------------------------------------
+| Web Routes
+|--------------------------------------------------------------------------
+|
+| Here is where you can register web routes for your application. These
+| routes are loaded by the RouteServiceProvider within a group which
+| contains the "web" middleware group. Now create something great!
+|
+*/
+
+Route::get('/', 'HomeController@index')->name('home');
+
+Route::get('/post/{slug}', 'HomeController@show')->name('post.show');
+Route::get('/tag/{slug}', 'HomeController@tag')->name('tag.show');
+Route::get('/category/{slug}', 'HomeController@category')->name('category.show');
+
+
+Route::group(['middleware' => ['auth', 'banRequests']], function () {
+    Route::get('/profile', 'ProfileController@index');
+    Route::post('/profile', 'ProfileController@store');
+    Route::post('/comments', 'CommentsController@store')->name('comments.create');
+    Route::post('/subscribe', 'SubsController@subscribe')->name('subscribe.create');
+    Route::get('/subscribe/verify/{token}', 'SubsController@verify');
+    Route::get('/logout', 'AuthController@logout');
+});
+
+Route::group(['middleware' => 'guest'], function() {
+    Route::get('/register', 'AuthController@registerForm');
+    Route::post('/register', 'AuthController@register');
+    Route::get('/login', 'AuthController@loginForm')->name('login');
+    Route::post('/login', 'AuthController@login')->middleware('banLogin');
+});
+
+Route::group(['prefix' => '/admin', 'namespace' => 'Admin', 'middleware' => 'admin'], function() {
+    Route::get('/', 'DashboardController@index')->name('admin');
+    Route::resource('/categories', 'CategoriesController');
+    Route::resource('/tags', 'TagsController');
+    Route::resource('/users', 'UsersController');
+    Route::get('/users/update/{id}', 'UsersController@toggleBan')->name('users.status');
+    Route::resource('/posts', 'PostsController');
+    Route::get('/comments', 'CommentsController@index')->name('admin.comments');
+    Route::get('/comments/toggle/{id}', 'CommentsController@toggle')->name('comment.edit');
+    Route::delete('/comment/{id}/delete', 'CommentsController@destroy')->name('comment.destroy');
+    Route::resource('/subscribers', 'SubscribesController');
+});
